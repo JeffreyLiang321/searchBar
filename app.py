@@ -8,78 +8,8 @@ CORS(app)
 
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 DATABASE_ID = os.getenv("DATABASE_ID")
-
+# small changes
 @app.route("/search-apartments", methods=["POST"])
-# def search_apartments():
-#     data = request.get_json()
-#     filters = []
-
-#     if data.get("available_now"):
-#         filters.append({
-#             "property": "Available Now",
-#             "checkbox": {"equals": True}
-#         })
-#     if data.get("max_rent"):
-#         filters.append({
-#             "property": "Monthly Rent",
-#             "number": {"less_than_or_equal_to": int(data["max_rent"])}
-#         })
-#     if data.get("bedroom"):
-#         filters.append({
-#             "property": "Number of Bedrooms",
-#             "select": {"equals": data["bedroom"]}
-#         })
-#     if data.get("district"):
-#         filters.append({
-#             "property": "District",
-#             "rich_text": {"equals": data["district"]}
-#         })
-
-#     payload = {"filter": {"and": filters}}
-
-#     headers = {
-#         "Authorization": f"Bearer {NOTION_API_KEY}",
-#         "Notion-Version": "2022-06-28",
-#         "Content-Type": "application/json"
-#     }
-
-#     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-#     response = requests.post(url, headers=headers, json=payload)
-
-#     if response.status_code != 200:
-#         return jsonify({"error": response.text}), response.status_code
-
-#     results = response.json()["results"]
-#     output = []
-
-#     for r in results:
-#         props = r["properties"]
-
-#         # Description (rich text)
-#         description = ""
-#         if props["Description"]["rich_text"]:
-#             description = props["Description"]["rich_text"][0]["plain_text"]
-
-#         # Image (files)
-#         image_url = ""
-#         if props["Image"]["files"]:
-#             first_file = props["Image"]["files"][0]
-#             if "file" in first_file:
-#                 image_url = first_file["file"]["url"]
-#             elif "external" in first_file:
-#                 image_url = first_file["external"]["url"]
-
-#         output.append({
-#             "name": props["Apartment Name"]["title"][0]["plain_text"],
-#             "rent": props["Monthly Rent"]["number"],
-#             "district": props["District"]["rich_text"][0]["plain_text"],
-#             "description": description,
-#             "image_url": image_url
-#         })
-
-
-#     return jsonify(output)
-
 def search_apartments():
     try:
         data = request.get_json()
