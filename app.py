@@ -10,75 +10,153 @@ NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 DATABASE_ID = os.getenv("DATABASE_ID")
 
 @app.route("/search-apartments", methods=["POST"])
+# def search_apartments():
+#     data = request.get_json()
+#     filters = []
+
+#     if data.get("available_now"):
+#         filters.append({
+#             "property": "Available Now",
+#             "checkbox": {"equals": True}
+#         })
+#     if data.get("max_rent"):
+#         filters.append({
+#             "property": "Monthly Rent",
+#             "number": {"less_than_or_equal_to": int(data["max_rent"])}
+#         })
+#     if data.get("bedroom"):
+#         filters.append({
+#             "property": "Number of Bedrooms",
+#             "select": {"equals": data["bedroom"]}
+#         })
+#     if data.get("district"):
+#         filters.append({
+#             "property": "District",
+#             "rich_text": {"equals": data["district"]}
+#         })
+
+#     payload = {"filter": {"and": filters}}
+
+#     headers = {
+#         "Authorization": f"Bearer {NOTION_API_KEY}",
+#         "Notion-Version": "2022-06-28",
+#         "Content-Type": "application/json"
+#     }
+
+#     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+#     response = requests.post(url, headers=headers, json=payload)
+
+#     if response.status_code != 200:
+#         return jsonify({"error": response.text}), response.status_code
+
+#     results = response.json()["results"]
+#     output = []
+
+#     for r in results:
+#         props = r["properties"]
+
+#         # Description (rich text)
+#         description = ""
+#         if props["Description"]["rich_text"]:
+#             description = props["Description"]["rich_text"][0]["plain_text"]
+
+#         # Image (files)
+#         image_url = ""
+#         if props["Image"]["files"]:
+#             first_file = props["Image"]["files"][0]
+#             if "file" in first_file:
+#                 image_url = first_file["file"]["url"]
+#             elif "external" in first_file:
+#                 image_url = first_file["external"]["url"]
+
+#         output.append({
+#             "name": props["Apartment Name"]["title"][0]["plain_text"],
+#             "rent": props["Monthly Rent"]["number"],
+#             "district": props["District"]["rich_text"][0]["plain_text"],
+#             "description": description,
+#             "image_url": image_url
+#         })
+
+
+#     return jsonify(output)
+
 def search_apartments():
-    data = request.get_json()
-    filters = []
+    try:
+        data = request.get_json()
+        print("Received payload:", data)
 
-    if data.get("available_now"):
-        filters.append({
-            "property": "Available Now",
-            "checkbox": {"equals": True}
-        })
-    if data.get("max_rent"):
-        filters.append({
-            "property": "Monthly Rent",
-            "number": {"less_than_or_equal_to": int(data["max_rent"])}
-        })
-    if data.get("bedroom"):
-        filters.append({
-            "property": "Number of Bedrooms",
-            "select": {"equals": data["bedroom"]}
-        })
-    if data.get("district"):
-        filters.append({
-            "property": "District",
-            "rich_text": {"equals": data["district"]}
-        })
+        print("Using DB ID:", DATABASE_ID)
+        print("Using Notion Key:", NOTION_API_KEY[:8], "...")
 
-    payload = {"filter": {"and": filters}}
+        filters = []
 
-    headers = {
-        "Authorization": f"Bearer {NOTION_API_KEY}",
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json"
-    }
+        if data.get("available_now"):
+            filters.append({
+                "property": "Available Now",
+                "checkbox": {"equals": True}
+            })
+        if data.get("max_rent"):
+            filters.append({
+                "property": "Monthly Rent",
+                "number": {"less_than_or_equal_to": int(data["max_rent"])}
+            })
+        if data.get("bedroom"):
+            filters.append({
+                "property": "Number of Bedrooms",
+                "select": {"equals": data["bedroom"]}
+            })
+        if data.get("district"):
+            filters.append({
+                "property": "District",
+                "rich_text": {"equals": data["district"]}
+            })
 
-    url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-    response = requests.post(url, headers=headers, json=payload)
+        payload = {"filter": {"and": filters}}
 
-    if response.status_code != 200:
-        return jsonify({"error": response.text}), response.status_code
+        headers = {
+            "Authorization": f"Bearer {NOTION_API_KEY}",
+            "Notion-Version": "2022-06-28",
+            "Content-Type": "application/json"
+        }
 
-    results = response.json()["results"]
-    output = []
+        print("Querying Notion with:", payload)
 
-    for r in results:
-        props = r["properties"]
+        url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+        response = requests.post(url, headers=headers, json=payload)
 
-        # Description (rich text)
-        description = ""
-        if props["Description"]["rich_text"]:
-            description = props["Description"]["rich_text"][0]["plain_text"]
+        print("Notion response:", response.status_code)
+        print("Notion body:", response.text)
 
-        # Image (files)
-        image_url = ""
-        if props["Image"]["files"]:
-            first_file = props["Image"]["files"][0]
-            if "file" in first_file:
-                image_url = first_file["file"]["url"]
-            elif "external" in first_file:
-                image_url = first_file["external"]["url"]
+        if response.status_code != 200:
+            return jsonify({"error": "Notion request failed"}), 500
 
-        output.append({
-            "name": props["Apartment Name"]["title"][0]["plain_text"],
-            "rent": props["Monthly Rent"]["number"],
-            "district": props["District"]["rich_text"][0]["plain_text"],
-            "description": description,
-            "image_url": image_url
-        })
+        results = response.json()["results"]
+        output = []
 
+        for r in results:
+            props = r["properties"]
+            description = props["Description"]["rich_text"][0]["plain_text"] if props["Description"]["rich_text"] else ""
+            image_url = ""
+            if props["Image"]["files"]:
+                first_file = props["Image"]["files"][0]
+                if "file" in first_file:
+                    image_url = first_file["file"]["url"]
+                elif "external" in first_file:
+                    image_url = first_file["external"]["url"]
 
-    return jsonify(output)
+            output.append({
+                "name": props["Apartment Name"]["title"][0]["plain_text"],
+                "rent": props["Monthly Rent"]["number"],
+                "district": props["District"]["rich_text"][0]["plain_text"],
+                "description": description,
+                "image_url": image_url
+            })
+
+        return jsonify(output)
+    
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
