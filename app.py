@@ -54,11 +54,29 @@ def search_apartments():
 
     for r in results:
         props = r["properties"]
+
+        # Description (rich text)
+        description = ""
+        if props["Description"]["rich_text"]:
+            description = props["Description"]["rich_text"][0]["plain_text"]
+
+        # Image (files)
+        image_url = ""
+        if props["Image"]["files"]:
+            first_file = props["Image"]["files"][0]
+            if "file" in first_file:
+                image_url = first_file["file"]["url"]
+            elif "external" in first_file:
+                image_url = first_file["external"]["url"]
+
         output.append({
             "name": props["Apartment Name"]["title"][0]["plain_text"],
             "rent": props["Monthly Rent"]["number"],
-            "district": props["District"]["rich_text"][0]["plain_text"]
+            "district": props["District"]["rich_text"][0]["plain_text"],
+            "description": description,
+            "image_url": image_url
         })
+
 
     return jsonify(output)
 
